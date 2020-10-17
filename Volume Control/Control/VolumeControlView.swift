@@ -9,23 +9,28 @@ import UIKit
 
 protocol VolumeControlDelegate {
     
-    func setVolumeButtonTapped(_ sender: Any)
-    func setLinesButtonTapped(_ sender: Any)
-    func setLines(_ lines: Int)
+    func percentageChanged(_ percentage: Double)
+    func volumeChanged(_ volume: Double)
 
 }
 
 class VolumeControlView: CustomView {
     
     var delegate: VolumeControlDelegate?
-    @IBOutlet weak var volumeLabel: UILabel!
-    @IBOutlet weak var volumeTextField: UITextField!
-    @IBOutlet weak var linesTextField: UITextField!
     
-    @IBOutlet private weak var linesStackView: UIStackView!
+    @IBOutlet weak var sliderSuperview: UIView!
+    @IBOutlet weak var sliderView: UIView!
+    @IBOutlet private weak var volumeConstraint: NSLayoutConstraint!
+    @IBOutlet private weak var volumeLabel: UILabel!
+    @IBOutlet weak var percentageTextField: UITextField!
+    @IBOutlet weak var volumeTextField: UITextField!
     
     private var config: VolumeControlConfig = .defaultConfig
-    private var currentVolume = 0
+    private var currentVolume = 0.0 {
+        didSet {
+            updateUI()
+        }
+    }
     
     // MARK: - Setup
 
@@ -41,55 +46,38 @@ class VolumeControlView: CustomView {
     }
     
     func setupUI() {
-        linesStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        sliderSuperview.backgroundColor = config.disabledColor
+        sliderSuperview.layer.borderWidth = 1
+        sliderSuperview.layer.borderColor = config.enabledColor.cgColor
+        sliderSuperview.clipsToBounds = true
+        sliderView.backgroundColor = config.enabledColor
         
-        for _ in config.minVolume...config.maxVolume {
-            let view = UIView()
-            view.backgroundColor = config.disabledColor
-            view.layer.borderWidth = 1
-            view.layer.borderColor = config.enabledColor.cgColor
-            
-            let tap = UITapGestureRecognizer(target: self, action: #selector(onTap(_:)))
-            view.addGestureRecognizer(tap)
-            linesStackView.addArrangedSubview(view)
+        let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_ :)))
+        sliderSuperview.addGestureRecognizer(tap)
+        
+        updateUI()
+        layoutIfNeeded()
+    }
+    
+    private func updateUI() {
+        let percentage = config.percentageForVolume(volume: currentVolume)
+        let height = sliderSuperview.frame.height * CGFloat(percentage)
+        
+        volumeConstraint.constant = height
+        
+        UIView.animate(withDuration: 0.2) { [weak self] in
+            self?.sliderSuperview.layoutSubviews()
         }
     }
     
-    func setVolume(_ to: Int) {
-        guard to != currentVolume else { return }
-        let up = to > currentVolume
-        
-        isUserInteractionEnabled = false
-        
-        for index in (up ? currentVolume : to)...(up ? to : currentVolume) {
-            let view = linesStackView.arrangedSubviews[index]
-            let duration = 0.05
-            UIView.animate(withDuration: duration,
-                           delay: duration * Double(up ? index : (config.maxVolume - config.minVolume) - index),
-                           options: .curveLinear) { [weak self] in
-                view.backgroundColor = up ? self?.config.enabledColor : self?.config.disabledColor
-                view.layer.borderColor = up ? self?.config.disabledColor.cgColor : self?.config.enabledColor.cgColor
-            } completion: { [weak self] (_) in
-                self?.isUserInteractionEnabled = true
-                self?.currentVolume = to
-            }
-        }
-        
-        
-        for view in linesStackView.arrangedSubviews[(up ? currentVolume : to)...(up ? to : currentVolume)] {
-            let duration = 0.1
-            UIView.animate(withDuration: duration,
-                           delay: duration,
-                           options: .curveLinear) { [weak self] in
-                view.backgroundColor = up ? self?.config.enabledColor : self?.config.disabledColor
-                view.layer.borderColor = up ? self?.config.disabledColor.cgColor : self?.config.enabledColor.cgColor
-            } completion: { [weak self] (_) in
-                self?.isUserInteractionEnabled = true
-                self?.currentVolume = to
-            }
-
-        }
-        
+    func set(volume: Double,
+             volumeText: String,
+             percentageText: String,
+             percentageLabelText: String) {
+        currentVolume = volume
+        volumeTextField.text = volumeText
+        percentageTextField.text = percentageText
+        volumeLabel.text = percentageLabelText
     }
     
 }
@@ -98,20 +86,24 @@ class VolumeControlView: CustomView {
 
 extension VolumeControlView {
     
-    @objc private func onTap(_ sender: UITapGestureRecognizer) {
-        guard let view = sender.view,
-              let index = linesStackView.subviews.firstIndex(of: view)
-        else { return }
+    @objc func handleTap(_ sender: UITapGestureRecognizer) {
         
-        delegate?.setLines(index)
+        if sender.state == .ended {
+            let percentage = Double(1 - sender.location(in: sliderSuperview).y / sliderSuperview.frame.height)
+            delegate?.percentageChanged(percentage)
+        }
     }
     
-    @IBAction private func setLinesTapped(_ sender: Any) {
-        delegate?.setLinesButtonTapped(sender)
+    @IBAction private func volumeButtonTapped(_ sender: Any) {
+        guard let volume = Double(volumeTextField.text ?? "") else { return }
+        
+        delegate?.volumeChanged(volume)
     }
     
-    @IBAction private func setVolumeTapped(_ sender: Any) {
-        delegate?.setVolumeButtonTapped(sender)
+    @IBAction private func percentageButtonTapped(_ sender: Any) {
+        guard let percentage = Double(percentageTextField.text ?? "") else { return }
+        
+        delegate?.percentageChanged(percentage/100)
     }
 
 }

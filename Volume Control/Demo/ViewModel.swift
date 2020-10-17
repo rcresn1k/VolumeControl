@@ -10,25 +10,48 @@ import Foundation
 
 class ViewModel {
     
-    let lines = Dynamic<Int>(0)
-    let volumePercentage = Dynamic<Int>(0)
+    let volume = Dynamic<Double>(0.0)
     let config = Dynamic<VolumeControlConfig>(.defaultConfig)
     
-    required init() {
-        
-    }
+    required init() {}
     
-    init(startVolume: Int, config: VolumeControlConfig) {
-        lines.value = startVolume
+    init(startVolume: Double, config: VolumeControlConfig) {
+        volume.value = startVolume
         self.config.value = config
     }
     
-    func percentageForLines(lines: Int) -> Int {
-        return Int(Double(lines) / Double(config.value.maxVolume - config.value.minVolume) * 100.0)
+}
+
+// MARK - Helpers
+extension ViewModel {
+    
+    var percentage: Double {
+        config.value.percentageForVolume(volume: volume.value)
+    }
+    var percentageText: String {
+        "\(round(percentage * 100))"
     }
     
-    func linesForPercentage(percentage: Int) -> Int {
-        return Int(round(Double(config.value.maxVolume - config.value.minVolume) * Double(percentage) / 100.0))
+    var percentageLabelText: String {
+        "Volume set at \(round(percentage * 100))%"
+    }
+    
+    var volumeText: String {
+        "\(round(volume.value))"
+    }
+
+}
+
+extension ViewModel: VolumeControlDelegate {
+    
+    func volumeChanged(_ volume: Double) {
+        self.volume.value = max(min(volume, config.value.maxVolume), config.value.minVolume)
+    }
+    
+    func percentageChanged(_ percentage: Double) {
+        self.volume.value = config.value.volumeForPercentage(percentage: percentage)
     }
     
 }
+
+

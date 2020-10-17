@@ -21,7 +21,7 @@ class ViewController: UIViewController {
             view.addSubview(control)
             volumeControl = control
         }
-        volumeControl?.delegate = self
+        volumeControl?.delegate = viewModel
         volumeControl?.setup(config: VolumeControlConfig.sabrininConfig)
         
         setupBindings()
@@ -34,59 +34,15 @@ class ViewController: UIViewController {
             self?.volumeControl?.setup(config: new)
         }
         
-        viewModel.lines.bindAndFire { [weak self ](_, new) in
-            guard let vm = self?.viewModel,
-                  new <= vm.config.value.maxVolume,
-                  new >= vm.config.value.minVolume
-            else { return }
+        viewModel.volume.bindAndFire { [weak self] (_, volume) in
+            guard let viewModel = self?.viewModel else { return }
             
-            let percentage = vm.percentageForLines(lines: new)
-            self?.volumeControl?.linesTextField.text = "\(new)"
-            self?.volumeControl?.volumeTextField.text = "\(percentage)"
-            self?.volumeControl?.volumeLabel.text = "Volume set at \(percentage) %"
-            
-            self?.volumeControl?.setVolume(new)
-            
-        }
-        
-        viewModel.volumePercentage.bindAndFire { [weak self ](_, new) in
-            guard let vm = self?.viewModel,
-                new <= 100,
-                new >= vm.config.value.minVolume
-            else { return }
-            
-            let lines = vm.linesForPercentage(percentage: new)
-            self?.volumeControl?.linesTextField.text = "\(lines)"
-            self?.volumeControl?.volumeTextField.text = "\(new)"
-            self?.volumeControl?.volumeLabel.text = "Volume set at \(new) %"
-            
-            self?.volumeControl?.setVolume(lines)
+            self?.volumeControl?.set(volume: volume,
+                                    volumeText: viewModel.volumeText,
+                                    percentageText: viewModel.percentageText,
+                                    percentageLabelText: viewModel.percentageLabelText)
         }
     }
 
-}
-
-// MARK - ViewControlDelegate
-
-extension ViewController: VolumeControlDelegate {
-    
-    func setVolumeButtonTapped(_ sender: Any) {
-        guard let new = Int(volumeControl?.volumeTextField.text ?? "")
-        else { return }
-        
-        viewModel.volumePercentage.value = new
-    }
-    
-    func setLinesButtonTapped(_ sender: Any) {
-        guard let new = Int(volumeControl?.linesTextField.text ?? "")
-        else { return }
-        
-        viewModel.lines.value = new
-    }
-    
-    func setLines(_ lines: Int) {
-        viewModel.lines.value = lines
-    }
-    
 }
 

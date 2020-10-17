@@ -9,10 +9,24 @@ import UIKit
 
 struct VolumeControlConfig {
     
-    let minVolume: Int
-    let maxVolume: Int
+    let minVolume: Double
+    let maxVolume: Double
     let enabledColor: UIColor
     let disabledColor: UIColor
+    
+    // MARK - Helpers
+    
+    var volumeDifference: Double {
+        return maxVolume - minVolume
+    }
+    
+    func volumeForPercentage(percentage: Double) -> Double {
+        max(min(volumeDifference * percentage, maxVolume), minVolume)
+    }
+    
+    func percentageForVolume(volume: Double) -> Double {
+        max(min((volume - minVolume) / volumeDifference, 1.0), 0.0)
+    }
     
 }
 
