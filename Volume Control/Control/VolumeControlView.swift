@@ -26,21 +26,17 @@ class VolumeControlView: CustomView {
     @IBOutlet weak var volumeTextField: UITextField!
     
     private var config: VolumeControlConfig = .defaultConfig
-    private var currentVolume = 0.0 {
-        didSet {
-            updateUI()
-        }
-    }
+    private var currentVolume = 0.0
     
     // MARK: - Setup
 
     override func setup() {
         super.setup()
         
-        setup(config: .defaultConfig)
+        set(config: .defaultConfig)
     }
     
-    func setup(config: VolumeControlConfig) {
+    func set(config: VolumeControlConfig) {
         self.config = config
         setupUI()
     }
@@ -60,24 +56,24 @@ class VolumeControlView: CustomView {
     }
     
     private func updateUI() {
-        let percentage = config.percentageForVolume(volume: currentVolume)
-        let height = sliderSuperview.frame.height * CGFloat(percentage)
+        currentVolume = max(min(currentVolume, config.maxVolume), config.minVolume)
+        let percentage = CGFloat(config.percentageForVolume(volume: currentVolume))
+        let height = sliderSuperview.frame.height * percentage
         
         volumeConstraint.constant = height
+        volumeTextField.text = String(format: "%.1f", currentVolume)
+        percentageTextField.text = String(format: "%.1f", percentage * 100)
+        volumeLabel.text = String(format: "Volume set at %.1f%", percentage * 100)
         
-        UIView.animate(withDuration: 0.2) { [weak self] in
+        UIView.animate(withDuration: 0.1) { [weak self] in
             self?.sliderSuperview.layoutSubviews()
         }
     }
     
-    func set(volume: Double,
-             volumeText: String,
-             percentageText: String,
-             percentageLabelText: String) {
+    func set(volume: Double) {
         currentVolume = volume
-        volumeTextField.text = volumeText
-        percentageTextField.text = percentageText
-        volumeLabel.text = percentageLabelText
+        
+        updateUI()
     }
     
 }
@@ -86,7 +82,7 @@ class VolumeControlView: CustomView {
 
 extension VolumeControlView {
     
-    @objc func handleTap(_ sender: UITapGestureRecognizer) {
+    @objc private func handleTap(_ sender: UITapGestureRecognizer) {
         
         if sender.state == .ended {
             let percentage = Double(1 - sender.location(in: sliderSuperview).y / sliderSuperview.frame.height)

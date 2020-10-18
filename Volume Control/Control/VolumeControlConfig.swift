@@ -39,8 +39,8 @@ extension VolumeControlConfig {
                                                           enabledColor: .blue,
                                                           disabledColor: .gray)
     
-    public static let crazyConfig = VolumeControlConfig(minVolume: 0,
-                                                        maxVolume: 11,
+    public static let crazyConfig = VolumeControlConfig(minVolume: 3.2,
+                                                        maxVolume: 47.12,
                                                         enabledColor: .red,
                                                         disabledColor: .yellow)
     

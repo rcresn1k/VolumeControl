@@ -21,8 +21,7 @@ class ViewController: UIViewController {
             view.addSubview(control)
             volumeControl = control
         }
-        volumeControl?.delegate = viewModel
-        volumeControl?.setup(config: VolumeControlConfig.sabrininConfig)
+        volumeControl?.delegate = self
         
         setupBindings()
     }
@@ -31,18 +30,26 @@ class ViewController: UIViewController {
 
     func setupBindings() {
         viewModel.config.bindAndFire { [weak self] (_, new) in
-            self?.volumeControl?.setup(config: new)
+            self?.volumeControl?.set(config: new)
         }
         
         viewModel.volume.bindAndFire { [weak self] (_, volume) in
-            guard let viewModel = self?.viewModel else { return }
-            
-            self?.volumeControl?.set(volume: volume,
-                                    volumeText: viewModel.volumeText,
-                                    percentageText: viewModel.percentageText,
-                                    percentageLabelText: viewModel.percentageLabelText)
+            self?.volumeControl?.set(volume: volume)
         }
     }
 
 }
 
+// MARK - VolumeControlDelegate
+
+extension ViewController: VolumeControlDelegate {
+    
+    func volumeChanged(_ volume: Double) {
+        viewModel.volume.value = max(min(volume, viewModel.config.value.maxVolume), viewModel.config.value.minVolume)
+    }
+    
+    func percentageChanged(_ percentage: Double) {
+        viewModel.volume.value = viewModel.config.value.volumeForPercentage(percentage: percentage)
+    }
+    
+}
