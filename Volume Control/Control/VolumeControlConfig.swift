@@ -21,7 +21,7 @@ struct VolumeControlConfig {
     }
     
     func volumeForPercentage(percentage: Double) -> Double {
-        max(min(volumeDifference * percentage, maxVolume), minVolume)
+        max(min(volumeDifference * percentage + minVolume, maxVolume), minVolume)
     }
     
     func percentageForVolume(volume: Double) -> Double {
@@ -39,8 +39,8 @@ extension VolumeControlConfig {
                                                           enabledColor: .blue,
                                                           disabledColor: .gray)
     
-    public static let crazyConfig = VolumeControlConfig(minVolume: 3.2,
-                                                        maxVolume: 47.12,
+    public static let crazyConfig = VolumeControlConfig(minVolume: 3,
+                                                        maxVolume: 5,
                                                         enabledColor: .red,
                                                         disabledColor: .yellow)
     
