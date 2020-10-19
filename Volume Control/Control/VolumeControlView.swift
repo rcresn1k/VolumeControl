@@ -95,7 +95,6 @@ extension VolumeControlView {
     
     @objc private func handlePan(_ sender: UIPanGestureRecognizer) {
         if sender.state == .changed {
-//        if sender.state == .ended {
             let percentage = Double(1 - sender.location(in: sliderSuperview).y / sliderSuperview.frame.height)
             delegate?.percentageChanged(percentage)
         }
