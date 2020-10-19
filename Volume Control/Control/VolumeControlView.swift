@@ -51,6 +51,9 @@ class VolumeControlView: CustomView {
         let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_ :)))
         sliderSuperview.addGestureRecognizer(tap)
         
+        let drag = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_ :)))
+        sliderSuperview.addGestureRecognizer(drag)
+        
         updateUI()
         layoutIfNeeded()
     }
@@ -85,6 +88,14 @@ extension VolumeControlView {
     @objc private func handleTap(_ sender: UITapGestureRecognizer) {
         
         if sender.state == .ended {
+            let percentage = Double(1 - sender.location(in: sliderSuperview).y / sliderSuperview.frame.height)
+            delegate?.percentageChanged(percentage)
+        }
+    }
+    
+    @objc private func handlePan(_ sender: UIPanGestureRecognizer) {
+        if sender.state == .changed {
+//        if sender.state == .ended {
             let percentage = Double(1 - sender.location(in: sliderSuperview).y / sliderSuperview.frame.height)
             delegate?.percentageChanged(percentage)
         }
