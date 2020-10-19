@@ -20,6 +20,7 @@ class ViewController: UIViewController {
             let control = VolumeControlView(frame: CGRect(x: 0, y: 100, width: view.frame.width, height: 400))
             view.addSubview(control)
             volumeControl = control
+            viewModel.config.value = .crazyConfig
         }
         volumeControl?.delegate = self
         

@@ -63,7 +63,7 @@ class VolumeControlView: CustomView {
         volumeConstraint.constant = height
         volumeTextField.text = String(format: "%.1f", currentVolume)
         percentageTextField.text = String(format: "%.1f", percentage * 100)
-        volumeLabel.text = String(format: "Volume set at %.1f%", percentage * 100)
+        volumeLabel.text = String(format: "Volume set at %.1f%%", percentage * 100)
         
         UIView.animate(withDuration: 0.1) { [weak self] in
             self?.sliderSuperview.layoutSubviews()
